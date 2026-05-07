@@ -1,26 +1,111 @@
 @import "tailwindcss";
 
+@theme {
+  /* ── Brand palette ── */
+  --color-fresh-50:  #f0fdf4;
+  --color-fresh-100: #dcfce7;
+  --color-fresh-200: #bbf7d0;
+  --color-fresh-300: #86efac;
+  --color-fresh-400: #4ade80;
+  --color-fresh-500: #22c55e;
+  --color-fresh-600: #16a34a;
+  --color-fresh-700: #15803d;
+  --color-fresh-800: #166534;
+  --color-fresh-900: #14532d;
+
+  --color-lemon-50:  #fefce8;
+  --color-lemon-100: #fef9c3;
+  --color-lemon-200: #fef08a;
+  --color-lemon-300: #fde047;
+  --color-lemon-400: #facc15;
+  --color-lemon-500: #eab308;
+  --color-lemon-600: #ca8a04;
+
+  --color-lime-50:  #f7fee7;
+  --color-lime-100: #ecfccb;
+  --color-lime-200: #d9f99d;
+  --color-lime-300: #bef264;
+  --color-lime-400: #a3e635;
+  --color-lime-500: #84cc16;
+
+  --color-earth-50:  #fafaf9;
+  --color-earth-100: #f5f5f4;
+  --color-earth-200: #e7e5e4;
+  --color-earth-700: #44403c;
+  --color-earth-800: #292524;
+  --color-earth-900: #1c1917;
+
+  /* ── Semantic tokens ── */
+  --color-brand:       var(--color-fresh-500);
+  --color-brand-dark:  var(--color-fresh-700);
+  --color-brand-light: var(--color-fresh-100);
+  --color-accent:      var(--color-lemon-400);
+
+  /* ── Typography ── */
+  --font-sans:    var(--font-plus-jakarta), system-ui, sans-serif;
+  --font-display: var(--font-fraunces), Georgia, serif;
+
+  /* ── Border radius ── */
+  --radius-card: 1rem;
+  --radius-btn:  0.75rem;
+}
+
+/* ── Base styles ── */
 :root {
   --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --foreground: #1c1917;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Utility classes ── */
+.container-app {
+  width: 100%;
+  max-width: 1280px;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .container-app {
+    padding-inline: 2rem;
+  }
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-fresh-300); border-radius: 9999px; }
+
+/* ── Focus ring ── */
+:focus-visible {
+  outline: 2px solid var(--color-fresh-500);
+  outline-offset: 2px;
+}
+
+/* ── Form inputs ── */
+.input-field {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e7e5e4;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  color: #1c1917;
+  font-size: 0.875rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #22c55e;
+  box-shadow: 0 0 0 2px #bbf7d0;
+}
+
+.input-field::placeholder {
+  color: #a8a29e;
 }

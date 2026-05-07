@@ -1,11 +1,16 @@
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
-import HomeClient from '@/components/recipe/HomeClient'
+import RecipesClient from '@/components/recipe/RecipesClient'
 import { createClient } from '@/lib/supabase/server'
 
-export const revalidate = 60 // refresh every 60s
+export const revalidate = 60
 
-export default async function HomePage() {
+export const metadata = {
+  title: 'Recetas | Hola Fresco',
+  description: 'Explorá todas nuestras recetas fáciles y saludables con lista de compras descargable.',
+}
+
+export default async function RecipesPage() {
   const supabase = await createClient()
 
   const [{ data: categories }, { data: recipes }] = await Promise.all([
@@ -21,7 +26,7 @@ export default async function HomePage() {
     <>
       <Header />
       <main className="flex-1">
-        <HomeClient categories={categories ?? []} recipes={recipes ?? []} />
+        <RecipesClient categories={categories ?? []} recipes={recipes ?? []} />
       </main>
       <Footer />
     </>
