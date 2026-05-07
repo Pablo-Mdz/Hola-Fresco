@@ -50,7 +50,7 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
     if (inCocina) {
       removeRecipe(recipe.id)
     } else {
-      addRecipe(recipe)
+      addRecipe(recipe, servings)
       setAdded(true)
       setTimeout(() => setAdded(false), 2000)
     }
@@ -166,7 +166,7 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
               ) : added ? (
                 <><Check size={16} /> ¡Agregada!</>
               ) : (
-                <><ShoppingBasket size={16} /> Agregar a mi Cocina</>
+                <><ShoppingBasket size={16} /> Agregar a mi Cocina · {servings} {servings === 1 ? 'porción' : 'porciones'}</>
               )}
             </button>
 

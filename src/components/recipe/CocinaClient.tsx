@@ -3,12 +3,12 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { ShoppingBasket, Trash2, Download, ArrowLeft, FileText } from 'lucide-react'
-import { useCocina } from '@/hooks/useCocina'
+import { useCocina, applyServings } from '@/hooks/useCocina'
 
 const SECTION_ORDER = ['Verduras', 'Frutas', 'Carnes y proteínas', 'Pescados', 'Lácteos', 'Harinas y granos', 'Condimentos', 'Otros']
 
 export default function CocinaClient() {
-  const { recipes, hydrated, removeRecipe, clearCocina, mergedIngredients } = useCocina()
+  const { recipes, hydrated, removeRecipe, updateServings, clearCocina, mergedIngredients } = useCocina()
   const [downloading, setDownloading] = useState(false)
 
   const grouped = mergedIngredients()
@@ -20,10 +20,12 @@ export default function CocinaClient() {
   async function downloadPDF(type: 'shopping' | 'recipes') {
     setDownloading(true)
     try {
+      // Pre-scale each recipe to its chosen serving count before sending to PDF
+      const scaledRecipes = recipes.map(applyServings)
       const res = await fetch('/api/generate-pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipes, type }),
+        body: JSON.stringify({ recipes: scaledRecipes, type }),
       })
       if (!res.ok) throw new Error('Error generando PDF')
       const html = await res.text()
@@ -145,32 +147,60 @@ export default function CocinaClient() {
         <div className="lg:col-span-2">
           <h2 className="font-display font-bold text-lg text-earth-900 mb-4">Recetas seleccionadas</h2>
           <div className="flex flex-col gap-3">
-            {recipes.map(recipe => (
-              <div key={recipe.id} className="flex items-center gap-3 bg-white border border-earth-200 rounded-xl p-3">
-                <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-fresh-50 flex-shrink-0">
-                  {recipe.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={recipe.image_url} alt={recipe.title_es} className="absolute inset-0 w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-2xl">
-                      {recipe.category?.icon ?? '🍽️'}
+            {recipes.map(recipe => {
+              const displayServings = recipe._scaledServings ?? recipe.servings
+              return (
+                <div key={recipe.id} className="bg-white border border-earth-200 rounded-xl p-3">
+                  <div className="flex items-center gap-3">
+                    {/* Thumbnail */}
+                    <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-fresh-50 flex-shrink-0">
+                      {recipe.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={recipe.image_url} alt={recipe.title_es} className="absolute inset-0 w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-2xl">
+                          {recipe.category?.icon ?? '🍽️'}
+                        </div>
+                      )}
                     </div>
-                  )}
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-earth-900 text-sm truncate">{recipe.title_es}</p>
+                      <p className="text-earth-500 text-xs mt-0.5">{recipe.prep_time + recipe.cook_time} min</p>
+                    </div>
+                    {/* Remove */}
+                    <button
+                      onClick={() => removeRecipe(recipe.id)}
+                      className="p-1.5 text-earth-400 hover:text-red-500 transition-colors flex-shrink-0"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+
+                  {/* Servings scaler */}
+                  <div className="flex items-center justify-between mt-2.5 pt-2.5 border-t border-earth-100">
+                    <span className="text-xs text-earth-500">Porciones</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => updateServings(recipe.id, displayServings - 1)}
+                        className="w-6 h-6 rounded-full border border-earth-200 flex items-center justify-center text-earth-600 hover:border-fresh-400 hover:text-fresh-600 hover:bg-fresh-50 transition-colors text-base leading-none"
+                      >
+                        −
+                      </button>
+                      <span className="text-sm font-semibold text-earth-900 w-16 text-center">
+                        {displayServings} {displayServings === 1 ? 'porción' : 'porciones'}
+                      </span>
+                      <button
+                        onClick={() => updateServings(recipe.id, displayServings + 1)}
+                        className="w-6 h-6 rounded-full border border-earth-200 flex items-center justify-center text-earth-600 hover:border-fresh-400 hover:text-fresh-600 hover:bg-fresh-50 transition-colors text-base leading-none"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-earth-900 text-sm truncate">{recipe.title_es}</p>
-                  <p className="text-earth-700 text-xs mt-0.5">
-                    {recipe.prep_time + recipe.cook_time} min · {recipe.servings} porciones
-                  </p>
-                </div>
-                <button
-                  onClick={() => removeRecipe(recipe.id)}
-                  className="p-1.5 text-earth-700 hover:text-red-500 transition-colors flex-shrink-0"
-                >
-                  <Trash2 size={15} />
-                </button>
-              </div>
-            ))}
+              )
+            })}
           </div>
 
           <Link
