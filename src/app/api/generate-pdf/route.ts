@@ -119,6 +119,10 @@ function buildRecipesHTML(recipes: Recipe[]): string {
     return `
       ${idx > 0 ? '<div class="page-break"></div>' : ''}
       <div class="recipe">
+        ${recipe.image_url ? `
+        <div class="recipe-img-wrap">
+          <img class="recipe-img" src="${recipe.image_url}" alt="${recipe.title_es}" />
+        </div>` : ''}
         <div class="recipe-header">
           <span class="recipe-cat">${recipe.category?.icon ?? '🍽️'} ${recipe.category?.name_es ?? ''}</span>
           <h2>${recipe.title_es}</h2>
@@ -156,6 +160,8 @@ function buildRecipesHTML(recipes: Recipe[]): string {
   .logo { font-size: 20px; font-weight: 800; color: #15803d; }
   .main-header p { font-size: 12px; color: #78716c; }
   .page-break { page-break-before: always; height: 32px; }
+  .recipe-img-wrap { width: 100%; height: 220px; border-radius: 14px; overflow: hidden; margin-bottom: 16px; }
+  .recipe-img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .recipe-header { background: linear-gradient(135deg, #f0fdf4, #fefce8); border-radius: 14px; padding: 20px; margin-bottom: 20px; }
   .recipe-cat { font-size: 11px; font-weight: 700; color: #22c55e; text-transform: uppercase; letter-spacing: 0.08em; }
   h2 { font-size: 26px; font-weight: 800; color: #1c1917; margin: 6px 0; }

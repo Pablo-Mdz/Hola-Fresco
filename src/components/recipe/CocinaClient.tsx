@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { ShoppingBasket, Trash2, Download, ArrowLeft, FileText } from 'lucide-react'
 import { useCocina } from '@/hooks/useCocina'
 
@@ -150,7 +149,8 @@ export default function CocinaClient() {
               <div key={recipe.id} className="flex items-center gap-3 bg-white border border-earth-200 rounded-xl p-3">
                 <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-fresh-50 flex-shrink-0">
                   {recipe.image_url ? (
-                    <Image src={recipe.image_url} alt={recipe.title_es} fill className="object-cover" sizes="56px" />
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={recipe.image_url} alt={recipe.title_es} className="absolute inset-0 w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-2xl">
                       {recipe.category?.icon ?? '🍽️'}

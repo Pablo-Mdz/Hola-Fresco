@@ -27,6 +27,7 @@ export const metadata: Metadata = {
   },
   description: 'Recetas fáciles y saludables con lista de compras descargable. Elegís las recetas, nosotros te decimos qué comprar.',
   keywords: ['recetas', 'saludable', 'fácil', 'lista de compras', 'cocina casera', 'meal planning'],
+  icons: { icon: '/favicon.svg', shortcut: '/favicon.svg' },
   openGraph: {
     siteName: 'Hola Fresco',
     title: 'Hola Fresco — Recetas fáciles y saludables',
