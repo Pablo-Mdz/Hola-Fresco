@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
-import { Clock, Users, Flame, ChefHat, ShoppingBasket, ArrowLeft, Check } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Clock, Users, Flame, ChefHat, ShoppingBasket, ArrowLeft, Check, Share2, Copy, CheckCheck } from 'lucide-react'
 import type { Recipe } from '@/types'
 import { useCocina } from '@/hooks/useCocina'
 
@@ -42,6 +42,49 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
   const [added, setAdded] = useState(false)
   const [servings, setServings] = useState(recipe.servings)
 
+  // Share state
+  const [showShareMenu, setShowShareMenu] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const shareRef = useRef<HTMLDivElement>(null)
+
+  // Close share menu when clicking outside
+  useEffect(() => {
+    if (!showShareMenu) return
+    function handleClick(e: MouseEvent) {
+      if (shareRef.current && !shareRef.current.contains(e.target as Node)) {
+        setShowShareMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [showShareMenu])
+
+  async function handleShare() {
+    const url = window.location.href
+    const text = `${recipe.title_es} — receta en Hola Fresco`
+    // Use native share sheet on mobile
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: recipe.title_es, text, url })
+      } catch { /* user cancelled */ }
+    } else {
+      setShowShareMenu(prev => !prev)
+    }
+  }
+
+  async function copyLink() {
+    await navigator.clipboard.writeText(window.location.href)
+    setCopied(true)
+    setTimeout(() => { setCopied(false); setShowShareMenu(false) }, 2000)
+  }
+
+  function shareWhatsApp() {
+    const url = encodeURIComponent(window.location.href)
+    const text = encodeURIComponent(`${recipe.title_es} — receta en Hola Fresco 🥬`)
+    window.open(`https://wa.me/?text=${text}%20${url}`, '_blank')
+    setShowShareMenu(false)
+  }
+
   const ratio = servings / recipe.servings
   const grouped = groupIngredients(recipe.ingredients ?? [])
   const totalTime = recipe.prep_time + recipe.cook_time
@@ -59,11 +102,45 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
   return (
     <div className="container-app py-8 max-w-5xl">
 
-      {/* Back */}
-      <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-earth-700 hover:text-fresh-600 transition-colors mb-6">
-        <ArrowLeft size={16} />
-        Volver al inicio
-      </Link>
+      {/* Top bar: back + share */}
+      <div className="flex items-center justify-between mb-6">
+        <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-earth-700 hover:text-fresh-600 transition-colors">
+          <ArrowLeft size={16} />
+          Volver al inicio
+        </Link>
+
+        {/* Share button */}
+        <div className="relative" ref={shareRef}>
+          <button
+            onClick={handleShare}
+            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-earth-700 hover:text-fresh-600 border border-earth-200 hover:border-fresh-400 rounded-btn transition-colors"
+          >
+            <Share2 size={15} />
+            Compartir
+          </button>
+
+          {/* Desktop popover */}
+          {showShareMenu && (
+            <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-earth-200 rounded-xl shadow-lg z-20 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+              <button
+                onClick={copyLink}
+                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-earth-700 hover:bg-earth-50 transition-colors"
+              >
+                {copied ? <CheckCheck size={16} className="text-fresh-500" /> : <Copy size={16} />}
+                {copied ? '¡Link copiado!' : 'Copiar link'}
+              </button>
+              <div className="h-px bg-earth-100" />
+              <button
+                onClick={shareWhatsApp}
+                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-earth-700 hover:bg-earth-50 transition-colors"
+              >
+                <span className="text-base leading-none">💬</span>
+                Compartir por WhatsApp
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
 
