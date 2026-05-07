@@ -207,7 +207,7 @@ export default function RecipeForm({ recipe, categories }: Props) {
         <p className="text-earth-700 text-sm mb-4">
           Describí la receta en cualquier idioma. Podés mencionar ingredientes, tipo de cocina, tiempo disponible o cualquier idea.
         </p>
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <textarea
             value={aiPrompt}
             onChange={e => setAiPrompt(e.target.value)}
@@ -218,7 +218,7 @@ export default function RecipeForm({ recipe, categories }: Props) {
           <button
             onClick={generateWithAI}
             disabled={aiLoading || !aiPrompt.trim()}
-            className="flex items-center gap-2 px-6 py-3 bg-fresh-500 hover:bg-fresh-600 disabled:bg-fresh-300 text-white font-semibold rounded-xl transition-colors self-start"
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-fresh-500 hover:bg-fresh-600 disabled:bg-fresh-300 text-white font-semibold rounded-xl transition-colors sm:self-start"
           >
             {aiLoading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
             {aiLoading ? 'Generando...' : 'Generar'}
@@ -242,7 +242,7 @@ export default function RecipeForm({ recipe, categories }: Props) {
           <section className="bg-white rounded-2xl border border-earth-200 p-6">
             <h3 className="font-semibold text-earth-900 mb-5">Título y descripción</h3>
             <div className="flex flex-col gap-5">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-earth-700 mb-2">Título en español *</label>
                   <input value={titleEs} onChange={e => setTitleEs(e.target.value)} className="input-field text-sm" placeholder="Pollo al limón con hierbas" />
@@ -252,7 +252,7 @@ export default function RecipeForm({ recipe, categories }: Props) {
                   <input value={titleEn} onChange={e => setTitleEn(e.target.value)} className="input-field text-sm" placeholder="Lemon herb chicken" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-earth-700 mb-2">Descripción ES</label>
                   <textarea value={descEs} onChange={e => setDescEs(e.target.value)} rows={4} className="input-field text-sm resize-y" placeholder="Descripción apetitosa en español..." />
@@ -273,25 +273,60 @@ export default function RecipeForm({ recipe, categories }: Props) {
                 <Plus size={15} /> Agregar
               </button>
             </div>
-            {/* Header */}
-            <div className="grid grid-cols-[1fr_1fr_90px_110px_150px_36px] gap-2 mb-2 px-1">
+            {/* Desktop header */}
+            <div className="hidden sm:grid grid-cols-[1fr_1fr_90px_110px_150px_36px] gap-2 mb-2 px-1">
               {['Nombre ES', 'Name EN', 'Cantidad', 'Unidad', 'Sección', ''].map(h => (
                 <span key={h} className="text-xs font-semibold text-earth-500 uppercase tracking-wide">{h}</span>
               ))}
             </div>
-            <div className="flex flex-col gap-2.5">
+            <div className="flex flex-col gap-3">
               {ingredients.map((ing, i) => (
-                <div key={i} className="grid grid-cols-[1fr_1fr_90px_110px_150px_36px] gap-2 items-center">
-                  <input value={ing.name_es} onChange={e => updateIngredient(i, 'name_es', e.target.value)} className="input-field text-sm" placeholder="Tomate cherry" />
-                  <input value={ing.name_en} onChange={e => updateIngredient(i, 'name_en', e.target.value)} className="input-field text-sm" placeholder="Cherry tomato" />
-                  <input value={ing.amount} onChange={e => updateIngredient(i, 'amount', e.target.value)} className="input-field text-sm" placeholder="200" />
-                  <input value={ing.unit} onChange={e => updateIngredient(i, 'unit', e.target.value)} className="input-field text-sm" placeholder="g" />
-                  <select value={ing.section} onChange={e => updateIngredient(i, 'section', e.target.value)} className="input-field text-sm">
-                    {SECTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                  <button onClick={() => removeIngredient(i)} className="p-2 text-earth-400 hover:text-red-500 transition-colors">
-                    <Trash2 size={15} />
-                  </button>
+                <div key={i} className="relative">
+                  {/* Mobile layout */}
+                  <div className="sm:hidden bg-earth-50 rounded-xl p-3 flex flex-col gap-2">
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <label className="block text-xs text-earth-500 mb-1">Nombre ES</label>
+                        <input value={ing.name_es} onChange={e => updateIngredient(i, 'name_es', e.target.value)} className="input-field text-sm" placeholder="Tomate cherry" />
+                      </div>
+                      <button onClick={() => removeIngredient(i)} className="p-2 text-earth-400 hover:text-red-500 transition-colors self-end mb-0.5">
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-earth-500 mb-1">Name EN</label>
+                      <input value={ing.name_en} onChange={e => updateIngredient(i, 'name_en', e.target.value)} className="input-field text-sm" placeholder="Cherry tomato" />
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="block text-xs text-earth-500 mb-1">Cantidad</label>
+                        <input value={ing.amount} onChange={e => updateIngredient(i, 'amount', e.target.value)} className="input-field text-sm" placeholder="200" />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-earth-500 mb-1">Unidad</label>
+                        <input value={ing.unit} onChange={e => updateIngredient(i, 'unit', e.target.value)} className="input-field text-sm" placeholder="g" />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-earth-500 mb-1">Sección</label>
+                        <select value={ing.section} onChange={e => updateIngredient(i, 'section', e.target.value)} className="input-field text-sm">
+                          {SECTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Desktop layout */}
+                  <div className="hidden sm:grid grid-cols-[1fr_1fr_90px_110px_150px_36px] gap-2 items-center">
+                    <input value={ing.name_es} onChange={e => updateIngredient(i, 'name_es', e.target.value)} className="input-field text-sm" placeholder="Tomate cherry" />
+                    <input value={ing.name_en} onChange={e => updateIngredient(i, 'name_en', e.target.value)} className="input-field text-sm" placeholder="Cherry tomato" />
+                    <input value={ing.amount} onChange={e => updateIngredient(i, 'amount', e.target.value)} className="input-field text-sm" placeholder="200" />
+                    <input value={ing.unit} onChange={e => updateIngredient(i, 'unit', e.target.value)} className="input-field text-sm" placeholder="g" />
+                    <select value={ing.section} onChange={e => updateIngredient(i, 'section', e.target.value)} className="input-field text-sm">
+                      {SECTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    <button onClick={() => removeIngredient(i)} className="p-2 text-earth-400 hover:text-red-500 transition-colors">
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -311,7 +346,7 @@ export default function RecipeForm({ recipe, categories }: Props) {
                   <span className="w-8 h-8 bg-fresh-100 text-fresh-700 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-1">
                     {step.step}
                   </span>
-                  <div className="flex-1 grid grid-cols-2 gap-3">
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <textarea
                       value={step.text_es}
                       onChange={e => updateStep(i, 'text_es', e.target.value)}
@@ -338,7 +373,7 @@ export default function RecipeForm({ recipe, categories }: Props) {
           {/* Consejos */}
           <section className="bg-white rounded-2xl border border-earth-200 p-6">
             <h3 className="font-semibold text-earth-900 mb-4">Consejo del chef</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <textarea value={tipsEs} onChange={e => setTipsEs(e.target.value)} rows={3} className="input-field text-sm resize-y" placeholder="Consejo útil en español..." />
               <textarea value={tipsEn} onChange={e => setTipsEn(e.target.value)} rows={3} className="input-field text-sm resize-y" placeholder="Useful tip in English..." />
             </div>

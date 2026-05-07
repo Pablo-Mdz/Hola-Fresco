@@ -110,8 +110,75 @@ export default function RecipesTable({ recipes: initial }: Props) {
         </div>
       )}
 
-      {/* ── Table ── */}
-      <div className="bg-white rounded-2xl border border-earth-200 overflow-hidden">
+      {/* ── Mobile cards ── */}
+      <div className="sm:hidden flex flex-col gap-3">
+        {recipes.map(recipe => (
+          <div key={recipe.id} className="bg-white rounded-2xl border border-earth-200 p-4">
+            <div className="flex items-start gap-3">
+              {/* Thumbnail */}
+              <div className="w-16 h-16 rounded-xl overflow-hidden bg-fresh-50 flex-shrink-0">
+                {recipe.image_url ? (
+                  <img src={recipe.image_url} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-2xl">
+                    {recipe.category?.icon ?? '🍽️'}
+                  </div>
+                )}
+              </div>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-earth-900 leading-snug truncate">{recipe.title_es}</p>
+                <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                  {recipe.category && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-earth-100 text-earth-700">
+                      {recipe.category.icon} {recipe.category.name_es}
+                    </span>
+                  )}
+                  <span className="text-xs text-earth-500">{difficultyLabel[recipe.difficulty]}</span>
+                  <span className="flex items-center gap-0.5 text-xs text-earth-500">
+                    <Clock size={11} />
+                    {recipe.prep_time + recipe.cook_time} min
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions row */}
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-earth-100">
+              <button
+                onClick={() => toggleStatus(recipe.id, recipe.status)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  recipe.status === 'published'
+                    ? 'bg-fresh-100 text-fresh-700 hover:bg-fresh-200'
+                    : 'bg-lemon-100 text-lemon-600 hover:bg-lemon-200'
+                }`}
+              >
+                {recipe.status === 'published' ? <Eye size={11} /> : <EyeOff size={11} />}
+                {recipe.status === 'published' ? 'Publicada' : 'Borrador'}
+              </button>
+              <div className="flex items-center gap-1">
+                <Link
+                  href={`/admin/recipes/${recipe.id}`}
+                  className="p-2 text-earth-700 hover:text-fresh-600 hover:bg-fresh-50 rounded-lg transition-colors"
+                >
+                  <Pencil size={15} />
+                </Link>
+                <button
+                  onClick={() => setDeleteTarget({ id: recipe.id, title: recipe.title_es })}
+                  disabled={deleting === recipe.id}
+                  className="p-2 text-earth-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Desktop table ── */}
+      <div className="hidden sm:block bg-white rounded-2xl border border-earth-200 overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-earth-100 bg-earth-50">

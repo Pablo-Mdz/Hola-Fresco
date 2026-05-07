@@ -17,8 +17,8 @@ export default async function AdminRecipesPage() {
 
   return (
     <AdminShell>
-      <div className="p-8">
-        <div className="flex items-center justify-between mb-8">
+      <div className="p-4 sm:p-8">
+        <div className="flex items-center justify-between mb-6 sm:mb-8">
           <div>
             <h1 className="font-display font-bold text-2xl text-earth-900">Recetas</h1>
             <p className="text-earth-700 text-sm mt-1">

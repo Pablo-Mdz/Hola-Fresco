@@ -14,8 +14,8 @@ export default async function NewRecipePage() {
 
   return (
     <AdminShell>
-      <div className="p-8 max-w-[1400px]">
-        <div className="flex items-center gap-3 mb-8">
+      <div className="p-4 sm:p-8 max-w-[1400px]">
+        <div className="flex items-center gap-3 mb-6 sm:mb-8">
           <Link href="/admin/recipes" className="p-2 text-earth-700 hover:text-earth-900 hover:bg-earth-100 rounded-lg transition-colors">
             <ChevronLeft size={18} />
           </Link>
