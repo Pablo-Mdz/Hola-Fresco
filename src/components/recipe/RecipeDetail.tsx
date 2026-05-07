@@ -23,11 +23,26 @@ function groupIngredients(ingredients: Recipe['ingredients']) {
   }, {} as Record<string, typeof ingredients>)
 }
 
+// Scale an ingredient amount string by a ratio, returning a nicely formatted string
+function scaleAmount(raw: string, ratio: number): string {
+  const num = parseFloat(raw)
+  if (isNaN(num)) return raw          // e.g. "al gusto" — leave as-is
+  const scaled = num * ratio
+  if (scaled === 0) return '0'
+  if (Number.isInteger(scaled)) return String(scaled)
+  // Round to 1 decimal; drop trailing zero
+  const fixed1 = parseFloat(scaled.toFixed(1))
+  if (Number.isInteger(fixed1)) return String(fixed1)
+  return fixed1.toFixed(1)
+}
+
 export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
   const { addRecipe, removeRecipe, isInCocina } = useCocina()
   const inCocina = isInCocina(recipe.id)
   const [added, setAdded] = useState(false)
+  const [servings, setServings] = useState(recipe.servings)
 
+  const ratio = servings / recipe.servings
   const grouped = groupIngredients(recipe.ingredients ?? [])
   const totalTime = recipe.prep_time + recipe.cook_time
 
@@ -157,9 +172,40 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
 
             {/* Ingredients */}
             <div className="bg-white border border-earth-200 rounded-2xl p-5">
-              <h2 className="font-display font-bold text-lg text-earth-900 mb-4">
-                Ingredientes · {recipe.servings} porciones
-              </h2>
+              {/* Header with servings scaler */}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-display font-bold text-lg text-earth-900">Ingredientes</h2>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setServings(s => Math.max(1, s - 1))}
+                    className="w-7 h-7 rounded-full border border-earth-200 flex items-center justify-center text-earth-700 hover:border-fresh-400 hover:text-fresh-600 hover:bg-fresh-50 transition-colors text-lg leading-none"
+                    aria-label="Menos porciones"
+                  >
+                    −
+                  </button>
+                  <span className="text-sm font-semibold text-earth-900 w-20 text-center">
+                    {servings} {servings === 1 ? 'porción' : 'porciones'}
+                  </span>
+                  <button
+                    onClick={() => setServings(s => s + 1)}
+                    className="w-7 h-7 rounded-full border border-earth-200 flex items-center justify-center text-earth-700 hover:border-fresh-400 hover:text-fresh-600 hover:bg-fresh-50 transition-colors text-lg leading-none"
+                    aria-label="Más porciones"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              {/* Reset hint when scaled */}
+              {servings !== recipe.servings && (
+                <button
+                  onClick={() => setServings(recipe.servings)}
+                  className="text-xs text-fresh-600 hover:text-fresh-700 mb-3 flex items-center gap-1 transition-colors"
+                >
+                  ↺ Volver a {recipe.servings} {recipe.servings === 1 ? 'porción' : 'porciones'}
+                </button>
+              )}
+
               <div className="flex flex-col gap-5">
                 {Object.entries(grouped).map(([section, items]) => (
                   <div key={section}>
@@ -169,7 +215,7 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
                         <li key={i} className="flex items-center justify-between text-sm">
                           <span className="text-earth-900">{ing.name_es}</span>
                           <span className="text-earth-700 font-medium text-right ml-2">
-                            {ing.amount} {ing.unit}
+                            {scaleAmount(ing.amount, ratio)} {ing.unit}
                           </span>
                         </li>
                       ))}
