@@ -138,6 +138,20 @@ function buildRecipesHTML(recipes: Recipe[]): string {
           <div class="ingredients">
             <h3>Ingredientes</h3>
             ${ingredientsHTML}
+            ${recipe.calories ? `
+            <div class="nutrition-box">
+              <h4>Nutrición <span class="per-serving">por porción</span></h4>
+              <div class="kcal-row">
+                <span>Calorías</span>
+                <strong>${recipe.calories} kcal</strong>
+              </div>
+              ${recipe.protein  != null ? `<div class="n-row"><span>Proteínas</span><span>${recipe.protein} g</span></div>` : ''}
+              ${recipe.carbs    != null ? `<div class="n-row"><span>Carbohidratos</span><span>${recipe.carbs} g</span></div>` : ''}
+              ${recipe.fat      != null ? `<div class="n-row"><span>Grasas</span><span>${recipe.fat} g</span></div>` : ''}
+              ${recipe.fiber    != null ? `<div class="n-row"><span>Fibra</span><span>${recipe.fiber} g</span></div>` : ''}
+              ${recipe.sugar    != null ? `<div class="n-row"><span>Azúcares</span><span>${recipe.sugar} g</span></div>` : ''}
+              ${recipe.sodium   != null ? `<div class="n-row"><span>Sodio</span><span>${recipe.sodium} mg</span></div>` : ''}
+            </div>` : ''}
           </div>
           <div class="steps">
             <h3>Preparación</h3>
@@ -177,6 +191,12 @@ function buildRecipesHTML(recipes: Recipe[]): string {
   .step-num { width: 24px; height: 24px; background: #22c55e; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
   .step p { font-size: 13px; color: #1c1917; line-height: 1.6; }
   .tip { background: #fefce8; border: 1px solid #fde68a; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #78716c; margin-top: 16px; line-height: 1.5; }
+  .nutrition-box { margin-top: 18px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 12px; }
+  .nutrition-box h4 { font-size: 11px; font-weight: 700; color: #15803d; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .per-serving { font-weight: 400; color: #86efac; font-size: 10px; text-transform: none; letter-spacing: 0; }
+  .kcal-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: #14532d; background: #dcfce7; border-radius: 6px; padding: 5px 8px; margin-bottom: 6px; }
+  .n-row { display: flex; justify-content: space-between; font-size: 11px; color: #374151; padding: 3px 0; border-bottom: 1px solid #d1fae5; }
+  .n-row:last-child { border-bottom: none; }
   .footer { margin-top: 40px; padding-top: 12px; border-top: 1px solid #e7e5e4; font-size: 11px; color: #a8a29e; text-align: center; }
   @media print { body { padding: 24px; } .page-break { height: 0; } }
 </style>

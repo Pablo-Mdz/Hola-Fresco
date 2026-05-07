@@ -181,39 +181,36 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
 
             {/* Nutrition panel */}
             {recipe.calories && (
-              <div className="bg-earth-900 text-white rounded-2xl p-5 mt-4">
-                <h3 className="font-display font-bold text-sm mb-1">Información nutricional</h3>
-                <p className="text-earth-400 text-xs mb-4">Por porción · {recipe.servings} porciones</p>
+              <div className="bg-white border border-earth-200 rounded-2xl p-5 mt-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-display font-bold text-earth-900">Nutrición</h3>
+                  <span className="text-xs text-earth-500 bg-earth-50 px-2.5 py-1 rounded-full">por porción</span>
+                </div>
 
                 {/* Calories hero */}
-                <div className="flex items-end justify-between border-b border-earth-700 pb-3 mb-3">
-                  <span className="text-earth-400 text-sm">Calorías</span>
-                  <span className="text-3xl font-bold text-white">{recipe.calories}
-                    <span className="text-sm font-normal text-earth-400 ml-1">kcal</span>
+                <div className="flex items-center justify-between bg-fresh-50 rounded-xl px-4 py-3 mb-4">
+                  <span className="text-sm font-medium text-fresh-700">Calorías</span>
+                  <span className="text-2xl font-bold text-fresh-700">
+                    {recipe.calories}
+                    <span className="text-sm font-normal text-fresh-600 ml-1">kcal</span>
                   </span>
                 </div>
 
-                {/* Macros */}
-                <div className="flex flex-col gap-2.5">
-                  {recipe.protein != null && (
-                    <NutritionRow label="Proteínas" value={recipe.protein} unit="g" color="bg-blue-400" max={50} />
-                  )}
-                  {recipe.carbs != null && (
-                    <NutritionRow label="Carbohidratos" value={recipe.carbs} unit="g" color="bg-lemon-400" max={100} />
-                  )}
-                  {recipe.fat != null && (
-                    <NutritionRow label="Grasas" value={recipe.fat} unit="g" color="bg-orange-400" max={50} />
-                  )}
-                  {recipe.fiber != null && (
-                    <NutritionRow label="Fibra" value={recipe.fiber} unit="g" color="bg-fresh-400" max={30} />
-                  )}
-                  {recipe.sugar != null && (
-                    <NutritionRow label="Azúcares" value={recipe.sugar} unit="g" color="bg-pink-400" max={50} />
-                  )}
-                  {recipe.sodium != null && (
-                    <NutritionRow label="Sodio" value={recipe.sodium} unit="mg" color="bg-purple-400" max={2000} />
-                  )}
+                {/* Macros grid */}
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  {recipe.protein != null && <MacroChip label="Proteínas" value={recipe.protein} unit="g" color="text-blue-600 bg-blue-50" />}
+                  {recipe.carbs   != null && <MacroChip label="Carbos"    value={recipe.carbs}   unit="g" color="text-lemon-600 bg-lemon-50" />}
+                  {recipe.fat     != null && <MacroChip label="Grasas"    value={recipe.fat}     unit="g" color="text-orange-600 bg-orange-50" />}
                 </div>
+
+                {/* Secondary nutrients */}
+                {(recipe.fiber != null || recipe.sugar != null || recipe.sodium != null) && (
+                  <div className="flex flex-col gap-2 pt-3 border-t border-earth-100">
+                    {recipe.fiber  != null && <NutritionRow label="Fibra"    value={recipe.fiber}  unit="g"  color="bg-fresh-400"  max={30} />}
+                    {recipe.sugar  != null && <NutritionRow label="Azúcares" value={recipe.sugar}  unit="g"  color="bg-pink-400"   max={50} />}
+                    {recipe.sodium != null && <NutritionRow label="Sodio"    value={recipe.sodium} unit="mg" color="bg-purple-400" max={2000} />}
+                  </div>
+                )}
               </div>
             )}
 
@@ -234,21 +231,26 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
   )
 }
 
+function MacroChip({ label, value, unit, color }: { label: string; value: number; unit: string; color: string }) {
+  return (
+    <div className={`rounded-xl p-2.5 text-center ${color}`}>
+      <p className="text-lg font-bold leading-none">{value}<span className="text-xs font-normal ml-0.5">{unit}</span></p>
+      <p className="text-xs mt-1 opacity-80">{label}</p>
+    </div>
+  )
+}
+
 function NutritionRow({ label, value, unit, color, max }: {
-  label: string
-  value: number
-  unit: string
-  color: string
-  max: number
+  label: string; value: number; unit: string; color: string; max: number
 }) {
   const pct = Math.min((value / max) * 100, 100)
   return (
     <div>
       <div className="flex justify-between text-xs mb-1">
-        <span className="text-earth-400">{label}</span>
-        <span className="font-semibold text-white">{value}{unit}</span>
+        <span className="text-earth-500">{label}</span>
+        <span className="font-semibold text-earth-900">{value} {unit}</span>
       </div>
-      <div className="h-1.5 bg-earth-700 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-earth-100 rounded-full overflow-hidden">
         <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
       </div>
     </div>
