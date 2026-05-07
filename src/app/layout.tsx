@@ -15,14 +15,28 @@ const fraunces = Fraunces({
   style: ['normal', 'italic'],
 })
 
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3001')
+
 export const metadata: Metadata = {
-  title: 'Hola Fresco — Recetas fáciles y saludables',
-  description: 'Recetas fáciles, rápidas y saludables. Descarga la lista de compras y cocina con confianza.',
-  keywords: ['recetas', 'saludable', 'fácil', 'lista de compras', 'cocina'],
+  metadataBase: new URL(baseUrl),
+  title: {
+    default: 'Hola Fresco — Recetas fáciles y saludables',
+    template: '%s | Hola Fresco',
+  },
+  description: 'Recetas fáciles, rápidas y saludables con lista de compras descargable. Elegís las recetas, nosotros te decimos qué comprar.',
+  keywords: ['recetas', 'saludable', 'fácil', 'lista de compras', 'cocina casera', 'meal planning'],
   openGraph: {
-    title: 'Hola Fresco',
-    description: 'Recetas fáciles y saludables con lista de compras descargable',
+    siteName: 'Hola Fresco',
+    title: 'Hola Fresco — Recetas fáciles y saludables',
+    description: 'Recetas fáciles, rápidas y saludables con lista de compras descargable.',
     type: 'website',
+    locale: 'es_AR',
+    url: baseUrl,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Hola Fresco — Recetas fáciles y saludables',
+    description: 'Recetas fáciles, rápidas y saludables con lista de compras descargable.',
   },
 }
 
