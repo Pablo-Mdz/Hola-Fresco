@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import { Clock, Users, Flame } from 'lucide-react'
 import type { Recipe } from '@/types'
 
@@ -30,12 +29,11 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
       {/* Image */}
       <div className="relative aspect-[4/3] bg-fresh-50 overflow-hidden">
         {recipe.image_url ? (
-          <Image
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
             src={recipe.image_url}
             alt={recipe.title_es}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-5xl">

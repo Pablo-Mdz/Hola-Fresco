@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Sparkles, Plus, Trash2, Save, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Sparkles, Plus, Trash2, Eye, EyeOff, Loader2, ImageIcon, RefreshCw, X } from 'lucide-react'
 import type { Recipe, Category, Ingredient, RecipeStep } from '@/types'
 
 interface Props {
@@ -55,8 +55,33 @@ export default function RecipeForm({ recipe, categories }: Props) {
   const [steps, setSteps] = useState<RecipeStep[]>(recipe?.steps ?? [emptyStep(1)])
   const [slug, setSlug] = useState(recipe?.slug ?? '')
 
+  const [imageUrl, setImageUrl] = useState(recipe?.image_url ?? '')
+  const [imageLoading, setImageLoading] = useState(false)
+  const [imageError, setImageError] = useState('')
+  const [imageSearch, setImageSearch] = useState('')
+
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
+
+  // ── Image search (Unsplash) ──
+  async function generateImage(title_es: string, title_en: string, customQuery?: string) {
+    setImageLoading(true)
+    setImageError('')
+    try {
+      const res = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title_es, title_en, custom_query: customQuery || undefined }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setImageUrl(data.image_url ?? '')
+    } catch (err: unknown) {
+      setImageError(err instanceof Error ? err.message : 'Error al buscar imagen')
+    } finally {
+      setImageLoading(false)
+    }
+  }
 
   // ── AI generation ──
   async function generateWithAI() {
@@ -98,6 +123,9 @@ export default function RecipeForm({ recipe, categories }: Props) {
         const match = categories.find(c => c.slug === data.category_slug)
         if (match) setCategoryId(match.id)
       }
+
+      // Auto-fetch a matching photo from Unsplash (non-blocking)
+      generateImage(data.title_es ?? '', data.title_en ?? '')
     } catch (err: unknown) {
       setAiError(err instanceof Error ? err.message : 'Error al generar')
     } finally {
@@ -127,6 +155,7 @@ export default function RecipeForm({ recipe, categories }: Props) {
       sodium:  sodium  !== '' ? Number(sodium)   : null,
       tips_es: tipsEs, tips_en: tipsEn,
       tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+      image_url: imageUrl || null,
       ingredients, steps,
       status: finalStatus,
       featured,
@@ -318,6 +347,79 @@ export default function RecipeForm({ recipe, categories }: Props) {
 
         {/* ── Right: meta & actions ── */}
         <div className="flex flex-col gap-4">
+
+          {/* Imagen */}
+          <section className="bg-white rounded-2xl border border-earth-200 p-5">
+            <h3 className="font-semibold text-earth-900 mb-3">Foto del plato</h3>
+
+            {/* Preview */}
+            <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-earth-50 border border-earth-200 mb-3">
+              {imageLoading ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-earth-500">
+                  <Loader2 size={28} className="animate-spin text-fresh-500" />
+                  <span className="text-xs font-medium text-fresh-600">Buscando foto...</span>
+                  <span className="text-xs text-earth-400">Buscando en Unsplash...</span>
+                </div>
+              ) : imageUrl ? (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imageUrl}
+                    alt="Foto del plato"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                  <button
+                    onClick={() => setImageUrl('')}
+                    className="absolute top-2 right-2 p-1 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors"
+                    title="Eliminar imagen"
+                  >
+                    <X size={14} />
+                  </button>
+                </>
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-earth-400">
+                  <ImageIcon size={32} />
+                  <span className="text-xs">Sin foto</span>
+                </div>
+              )}
+            </div>
+
+            {imageError && (
+              <p className="text-red-600 text-xs mb-2 bg-red-50 px-3 py-2 rounded-lg">{imageError}</p>
+            )}
+
+            {/* Auto search button */}
+            <button
+              onClick={() => generateImage(titleEs, titleEn)}
+              disabled={imageLoading || !titleEs}
+              className="w-full flex items-center justify-center gap-2 py-2 px-3 border border-earth-200 hover:border-fresh-400 hover:text-fresh-600 disabled:opacity-40 text-earth-700 text-sm font-medium rounded-btn transition-colors"
+            >
+              <RefreshCw size={14} className={imageLoading ? 'animate-spin' : ''} />
+              {imageUrl ? 'Buscar otra foto' : 'Buscar foto'}
+            </button>
+
+            {/* Manual search */}
+            <div className="mt-3">
+              <label className="block text-xs font-medium text-earth-500 mb-1.5">Buscar con otras palabras</label>
+              <div className="flex gap-1.5">
+                <input
+                  type="text"
+                  value={imageSearch}
+                  onChange={e => setImageSearch(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && imageSearch.trim() && generateImage(titleEs, titleEn, imageSearch.trim())}
+                  placeholder="ej: empanadas argentinas"
+                  className="input-field text-xs flex-1"
+                />
+                <button
+                  onClick={() => imageSearch.trim() && generateImage(titleEs, titleEn, imageSearch.trim())}
+                  disabled={imageLoading || !imageSearch.trim()}
+                  className="px-3 py-2 bg-fresh-500 hover:bg-fresh-600 disabled:opacity-40 text-white text-xs font-medium rounded-btn transition-colors"
+                >
+                  Buscar
+                </button>
+              </div>
+            </div>
+          </section>
 
           {/* Publicar */}
           <section className="bg-white rounded-2xl border border-earth-200 p-5">

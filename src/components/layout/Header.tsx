@@ -4,12 +4,12 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ShoppingBasket, Menu, X } from 'lucide-react'
 import { useState } from 'react'
-import { useCart } from '@/hooks/useCart'
+import { useCocina } from '@/hooks/useCocina'
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
   const pathname = usePathname()
-  const { items } = useCart()
+  const { recipes } = useCocina()
 
   const isActive = (href: string) =>
     pathname === href ? 'text-fresh-600 font-semibold' : 'text-earth-700 hover:text-fresh-600'
@@ -46,9 +46,9 @@ export default function Header() {
             >
               <ShoppingBasket size={18} />
               <span className="hidden sm:inline">Cocina</span>
-              {items.length > 0 && (
+              {recipes.length > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-lemon-400 text-earth-900 text-xs font-bold rounded-full flex items-center justify-center">
-                  {items.length}
+                  {recipes.length}
                 </span>
               )}
             </Link>

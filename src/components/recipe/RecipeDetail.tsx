@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
 import { Clock, Users, Flame, ChefHat, ShoppingBasket, ArrowLeft, Check } from 'lucide-react'
@@ -59,7 +58,8 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
           {/* Image */}
           <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-fresh-50 mb-6">
             {recipe.image_url ? (
-              <Image src={recipe.image_url} alt={recipe.title_es} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 60vw" />
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={recipe.image_url} alt={recipe.title_es} className="absolute inset-0 w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-8xl">
                 {recipe.category?.icon ?? '🍽️'}
