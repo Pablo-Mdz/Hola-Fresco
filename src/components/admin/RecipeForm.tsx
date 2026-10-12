@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Sparkles, Plus, Trash2, Eye, EyeOff, Loader2, ImageIcon, RefreshCw, X } from 'lucide-react'
+import { Sparkles, Plus, Trash2, Eye, EyeOff, Loader2, ImageIcon, RefreshCw, X, Camera } from 'lucide-react'
 import type { Recipe, Category, Ingredient, RecipeStep } from '@/types'
 
 interface Props {
@@ -28,6 +28,12 @@ export default function RecipeForm({ recipe, categories }: Props) {
   const [aiPrompt, setAiPrompt] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState('')
+
+  // Photo digitization
+  const [photoLoading, setPhotoLoading] = useState(false)
+  const [photoError, setPhotoError] = useState('')
+  const [photoPreview, setPhotoPreview] = useState('')
+  const photoInputRef = useRef<HTMLInputElement>(null)
 
   // Form fields
   const [titleEs, setTitleEs] = useState(recipe?.title_es ?? '')
@@ -133,6 +139,63 @@ export default function RecipeForm({ recipe, categories }: Props) {
     }
   }
 
+  // ── Extract recipe from photo ──
+  async function extractFromPhoto(file: File) {
+    setPhotoLoading(true)
+    setPhotoError('')
+    // Show preview immediately
+    const previewUrl = URL.createObjectURL(file)
+    setPhotoPreview(previewUrl)
+
+    try {
+      // Resize image on client to keep payload reasonable (max 1600px)
+      const resized = await resizeImage(file, 1600)
+      const base64 = resized.split(',')[1]
+      const mediaType = file.type || 'image/jpeg'
+
+      const res = await fetch('/api/extract-recipe-from-photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: base64, mediaType }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+
+      // Fill all form fields
+      setTitleEs(data.title_es ?? '')
+      setTitleEn(data.title_en ?? '')
+      setDescEs(data.description_es ?? '')
+      setDescEn(data.description_en ?? '')
+      setPrepTime(data.prep_time ?? 15)
+      setCookTime(data.cook_time ?? 20)
+      setServings(data.servings ?? 2)
+      setDifficulty(data.difficulty ?? 'facil')
+      setCalories(data.calories ?? '')
+      setProtein(data.protein ?? '')
+      setCarbs(data.carbs ?? '')
+      setFat(data.fat ?? '')
+      setFiber(data.fiber ?? '')
+      setSugar(data.sugar ?? '')
+      setSodium(data.sodium ?? '')
+      setTipsEs(data.tips_es ?? '')
+      setTipsEn(data.tips_en ?? '')
+      setTags((data.tags ?? []).join(', '))
+      setIngredients(data.ingredients?.length ? data.ingredients : [emptyIngredient()])
+      setSteps(data.steps?.length ? data.steps : [emptyStep(1)])
+      if (!isEdit) setSlug(data.slug ?? '')
+      if (data.category_slug) {
+        const match = categories.find(c => c.slug === data.category_slug)
+        if (match) setCategoryId(match.id)
+      }
+      // Auto-search Unsplash photo using the extracted title
+      if (data.title_es) generateImage(data.title_es, data.title_en ?? '')
+    } catch (err: unknown) {
+      setPhotoError(err instanceof Error ? err.message : 'Error al procesar la foto')
+    } finally {
+      setPhotoLoading(false)
+    }
+  }
+
   // ── Save ──
   async function handleSave(publish?: boolean) {
     setSaving(true)
@@ -179,6 +242,25 @@ export default function RecipeForm({ recipe, categories }: Props) {
     }
   }
 
+  // ── Image resize helper ──
+  function resizeImage(file: File, maxPx: number): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      const url = URL.createObjectURL(file)
+      img.onload = () => {
+        const scale = Math.min(1, maxPx / Math.max(img.width, img.height))
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.round(img.width * scale)
+        canvas.height = Math.round(img.height * scale)
+        canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
+        URL.revokeObjectURL(url)
+        resolve(canvas.toDataURL('image/jpeg', 0.85))
+      }
+      img.onerror = reject
+      img.src = url
+    })
+  }
+
   // ── Ingredients helpers ──
   function updateIngredient(i: number, field: keyof Ingredient, value: string) {
     setIngredients(prev => prev.map((ing, idx) => idx === i ? { ...ing, [field]: value } : ing))
@@ -200,37 +282,102 @@ export default function RecipeForm({ recipe, categories }: Props) {
 
       {/* ── AI Generator ── */}
       <div className="bg-gradient-to-r from-fresh-50 to-lemon-50 border border-fresh-200 rounded-2xl p-6 mb-8">
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="text-fresh-600" size={18} />
-          <h2 className="font-semibold text-fresh-800">Generar receta con IA</h2>
-        </div>
-        <p className="text-earth-700 text-sm mb-4">
-          Describí la receta en cualquier idioma. Podés mencionar ingredientes, tipo de cocina, tiempo disponible o cualquier idea.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <textarea
-            value={aiPrompt}
-            onChange={e => setAiPrompt(e.target.value)}
-            placeholder="Ej: Pollo al limón con verduras de temporada, fácil, 30 minutos para 2 personas..."
-            rows={3}
-            className="flex-1 px-4 py-3 border border-fresh-200 rounded-xl text-sm text-earth-900 placeholder:text-earth-500 focus:outline-none focus:ring-2 focus:ring-fresh-400 bg-white resize-none"
-          />
-          <button
-            onClick={generateWithAI}
-            disabled={aiLoading || !aiPrompt.trim()}
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-fresh-500 hover:bg-fresh-600 disabled:bg-fresh-300 text-white font-semibold rounded-xl transition-colors sm:self-start"
-          >
-            {aiLoading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-            {aiLoading ? 'Generando...' : 'Generar'}
-          </button>
-        </div>
-        {aiError && <p className="text-red-600 text-sm mt-2">{aiError}</p>}
-        {aiLoading && (
-          <p className="text-fresh-600 text-sm mt-2 flex items-center gap-1.5">
-            <Loader2 size={13} className="animate-spin" />
-            Claude está creando tu receta...
+
+        {/* ── Photo digitization ── */}
+        <div className="mb-5 pb-5 border-b border-fresh-200">
+          <div className="flex items-center gap-2 mb-2">
+            <Camera className="text-fresh-600" size={18} />
+            <h2 className="font-semibold text-fresh-800">Digitalizar receta desde foto</h2>
+          </div>
+          <p className="text-earth-700 text-sm mb-4">
+            Sacale una foto a tu libreta o a una receta impresa y Claude la digitaliza automáticamente.
           </p>
-        )}
+
+          {/* Hidden file input — capture="environment" opens camera on mobile */}
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={e => {
+              const file = e.target.files?.[0]
+              if (file) extractFromPhoto(file)
+              e.target.value = ''
+            }}
+          />
+
+          <div className="flex flex-col sm:flex-row gap-3 items-start">
+            {/* Photo preview */}
+            {photoPreview && (
+              <div className="relative w-24 h-24 rounded-xl overflow-hidden border border-fresh-200 flex-shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={photoPreview} alt="Foto receta" className="w-full h-full object-cover" />
+                {photoLoading && (
+                  <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                    <Loader2 size={20} className="animate-spin text-fresh-600" />
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="flex flex-col gap-2 flex-1">
+              <button
+                onClick={() => photoInputRef.current?.click()}
+                disabled={photoLoading}
+                className="flex items-center justify-center gap-2 px-5 py-3 bg-fresh-500 hover:bg-fresh-600 disabled:bg-fresh-300 text-white font-semibold rounded-xl transition-colors w-full sm:w-auto"
+              >
+                {photoLoading ? (
+                  <><Loader2 size={16} className="animate-spin" /> Analizando foto...</>
+                ) : (
+                  <><Camera size={16} /> 📷 Sacar foto / Subir imagen</>
+                )}
+              </button>
+              {photoLoading && (
+                <p className="text-fresh-600 text-xs flex items-center gap-1.5">
+                  <Loader2 size={12} className="animate-spin" />
+                  Claude está leyendo tu receta...
+                </p>
+              )}
+              {photoError && <p className="text-red-600 text-xs bg-red-50 px-3 py-2 rounded-lg">{photoError}</p>}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Text AI ── */}
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="text-fresh-600" size={18} />
+            <h2 className="font-semibold text-fresh-800">Generar receta con IA</h2>
+          </div>
+          <p className="text-earth-700 text-sm mb-4">
+            Describí la receta en cualquier idioma. Podés mencionar ingredientes, tipo de cocina, tiempo disponible o cualquier idea.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <textarea
+              value={aiPrompt}
+              onChange={e => setAiPrompt(e.target.value)}
+              placeholder="Ej: Pollo al limón con verduras de temporada, fácil, 30 minutos para 2 personas..."
+              rows={3}
+              className="flex-1 px-4 py-3 border border-fresh-200 rounded-xl text-sm text-earth-900 placeholder:text-earth-500 focus:outline-none focus:ring-2 focus:ring-fresh-400 bg-white resize-none"
+            />
+            <button
+              onClick={generateWithAI}
+              disabled={aiLoading || !aiPrompt.trim()}
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-fresh-500 hover:bg-fresh-600 disabled:bg-fresh-300 text-white font-semibold rounded-xl transition-colors sm:self-start"
+            >
+              {aiLoading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+              {aiLoading ? 'Generando...' : 'Generar'}
+            </button>
+          </div>
+          {aiError && <p className="text-red-600 text-sm mt-2">{aiError}</p>}
+          {aiLoading && (
+            <p className="text-fresh-600 text-sm mt-2 flex items-center gap-1.5">
+              <Loader2 size={13} className="animate-spin" />
+              Claude está creando tu receta...
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-8">
