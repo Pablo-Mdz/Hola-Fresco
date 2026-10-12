@@ -28,7 +28,12 @@ export const metadata: Metadata = {
   },
   description: 'Recetas fáciles y saludables con lista de compras descargable. Elegís las recetas, nosotros te decimos qué comprar.',
   keywords: ['recetas', 'saludable', 'fácil', 'lista de compras', 'cocina casera', 'meal planning'],
-  icons: { icon: '/favicon.svg', shortcut: '/favicon.svg' },
+  manifest: '/manifest.json',
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/icon-192.png',
+  },
   openGraph: {
     siteName: 'Hola Fresco',
     title: 'Hola Fresco — Recetas fáciles y saludables',
@@ -53,6 +58,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className={`${plusJakarta.variable} ${fraunces.variable} h-full`}>
+      <head>
+        <meta name="theme-color" content="#22c55e" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Hola Fresco" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+      </head>
       <body className="min-h-full flex flex-col bg-white text-earth-900 antialiased">
         <LangProvider>
           {children}
