@@ -103,11 +103,28 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { imageBase64, mediaType } = await req.json()
-  if (!imageBase64) return NextResponse.json({ error: 'Imagen requerida' }, { status: 400 })
+  const body = await req.json()
+
+  // Accept either a single image or an array of pages
+  const pages: { imageBase64: string; mediaType: string }[] = body.images
+    ?? (body.imageBase64 ? [{ imageBase64: body.imageBase64, mediaType: body.mediaType }] : [])
+
+  if (!pages.length) return NextResponse.json({ error: 'Imagen requerida' }, { status: 400 })
 
   const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-  const mt = validTypes.includes(mediaType) ? mediaType : 'image/jpeg'
+
+  const imageBlocks = pages.map(p => ({
+    type: 'image' as const,
+    source: {
+      type: 'base64' as const,
+      media_type: (validTypes.includes(p.mediaType) ? p.mediaType : 'image/jpeg') as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
+      data: p.imageBase64,
+    },
+  }))
+
+  const pageNote = pages.length > 1
+    ? `La receta está dividida en ${pages.length} páginas (imágenes). Leelas todas y combiná la información.`
+    : 'Digitalizá esta receta. Extraé todos los datos y completá los que falten.'
 
   try {
     const message = await client.messages.create({
@@ -117,18 +134,8 @@ export async function POST(req: NextRequest) {
       messages: [{
         role: 'user',
         content: [
-          {
-            type: 'image',
-            source: {
-              type: 'base64',
-              media_type: mt as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
-              data: imageBase64,
-            },
-          },
-          {
-            type: 'text',
-            text: 'Digitalizá esta receta. Extraé todos los datos y completá los que falten.',
-          },
+          ...imageBlocks,
+          { type: 'text', text: pageNote },
         ],
       }],
     })

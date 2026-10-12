@@ -32,8 +32,9 @@ export default function RecipeForm({ recipe, categories }: Props) {
   // Photo digitization
   const [photoLoading, setPhotoLoading] = useState(false)
   const [photoError, setPhotoError] = useState('')
-  const [photoPreview, setPhotoPreview] = useState('')
-  const photoInputRef = useRef<HTMLInputElement>(null)
+  const [photoPages, setPhotoPages] = useState<{ preview: string; base64: string; mediaType: string }[]>([])
+  const cameraInputRef = useRef<HTMLInputElement>(null)
+  const galleryInputRef = useRef<HTMLInputElement>(null)
 
   // Form fields
   const [titleEs, setTitleEs] = useState(recipe?.title_es ?? '')
@@ -139,29 +140,39 @@ export default function RecipeForm({ recipe, categories }: Props) {
     }
   }
 
-  // ── Extract recipe from photo ──
-  async function extractFromPhoto(file: File) {
+  // ── Add photo pages ──
+  async function addPhotos(files: FileList) {
+    setPhotoError('')
+    const newPages: typeof photoPages = []
+    for (const file of Array.from(files)) {
+      const resized = await resizeImage(file, 1600)
+      newPages.push({
+        preview: URL.createObjectURL(file),
+        base64: resized.split(',')[1],
+        mediaType: file.type || 'image/jpeg',
+      })
+    }
+    setPhotoPages(prev => [...prev, ...newPages])
+  }
+
+  function removePhotoPage(idx: number) {
+    setPhotoPages(prev => prev.filter((_, i) => i !== idx))
+  }
+
+  // ── Digitize all accumulated pages ──
+  async function digitizePhotos() {
+    if (!photoPages.length) return
     setPhotoLoading(true)
     setPhotoError('')
-    // Show preview immediately
-    const previewUrl = URL.createObjectURL(file)
-    setPhotoPreview(previewUrl)
-
     try {
-      // Resize image on client to keep payload reasonable (max 1600px)
-      const resized = await resizeImage(file, 1600)
-      const base64 = resized.split(',')[1]
-      const mediaType = file.type || 'image/jpeg'
-
       const res = await fetch('/api/extract-recipe-from-photo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageBase64: base64, mediaType }),
+        body: JSON.stringify({ images: photoPages.map(p => ({ imageBase64: p.base64, mediaType: p.mediaType })) }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
 
-      // Fill all form fields
       setTitleEs(data.title_es ?? '')
       setTitleEn(data.title_en ?? '')
       setDescEs(data.description_es ?? '')
@@ -187,10 +198,9 @@ export default function RecipeForm({ recipe, categories }: Props) {
         const match = categories.find(c => c.slug === data.category_slug)
         if (match) setCategoryId(match.id)
       }
-      // Auto-search Unsplash photo using the extracted title
       if (data.title_es) generateImage(data.title_es, data.title_en ?? '')
     } catch (err: unknown) {
-      setPhotoError(err instanceof Error ? err.message : 'Error al procesar la foto')
+      setPhotoError(err instanceof Error ? err.message : 'Error al procesar las fotos')
     } finally {
       setPhotoLoading(false)
     }
@@ -285,63 +295,92 @@ export default function RecipeForm({ recipe, categories }: Props) {
 
         {/* ── Photo digitization ── */}
         <div className="mb-5 pb-5 border-b border-fresh-200">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-1">
             <Camera className="text-fresh-600" size={18} />
             <h2 className="font-semibold text-fresh-800">Digitalizar receta desde foto</h2>
           </div>
           <p className="text-earth-700 text-sm mb-4">
-            Sacale una foto a tu libreta o a una receta impresa y Claude la digitaliza automáticamente.
+            Sacale una foto a cada página de tu receta y Claude la digitaliza completa.
           </p>
 
-          {/* Hidden file input — capture="environment" opens camera on mobile */}
+          {/* Hidden inputs */}
           <input
-            ref={photoInputRef}
+            ref={cameraInputRef}
             type="file"
             accept="image/*"
             capture="environment"
             className="hidden"
-            onChange={e => {
-              const file = e.target.files?.[0]
-              if (file) extractFromPhoto(file)
-              e.target.value = ''
-            }}
+            onChange={e => { if (e.target.files?.length) addPhotos(e.target.files); e.target.value = '' }}
+          />
+          <input
+            ref={galleryInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={e => { if (e.target.files?.length) addPhotos(e.target.files); e.target.value = '' }}
           />
 
-          <div className="flex flex-col sm:flex-row gap-3 items-start">
-            {/* Photo preview */}
-            {photoPreview && (
-              <div className="relative w-24 h-24 rounded-xl overflow-hidden border border-fresh-200 flex-shrink-0">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={photoPreview} alt="Foto receta" className="w-full h-full object-cover" />
-                {photoLoading && (
-                  <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-                    <Loader2 size={20} className="animate-spin text-fresh-600" />
+          {/* Page thumbnails */}
+          {photoPages.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {photoPages.map((page, idx) => (
+                <div key={idx} className="relative w-20 h-20 rounded-xl overflow-hidden border border-fresh-200 group">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={page.preview} alt={`Página ${idx + 1}`} className="w-full h-full object-cover" />
+                  <div className="absolute inset-x-0 bottom-0 bg-black/50 text-white text-xs text-center py-0.5">
+                    p. {idx + 1}
                   </div>
-                )}
-              </div>
-            )}
-
-            <div className="flex flex-col gap-2 flex-1">
-              <button
-                onClick={() => photoInputRef.current?.click()}
-                disabled={photoLoading}
-                className="flex items-center justify-center gap-2 px-5 py-3 bg-fresh-500 hover:bg-fresh-600 disabled:bg-fresh-300 text-white font-semibold rounded-xl transition-colors w-full sm:w-auto"
-              >
-                {photoLoading ? (
-                  <><Loader2 size={16} className="animate-spin" /> Analizando foto...</>
-                ) : (
-                  <><Camera size={16} /> 📷 Sacar foto / Subir imagen</>
-                )}
-              </button>
-              {photoLoading && (
-                <p className="text-fresh-600 text-xs flex items-center gap-1.5">
-                  <Loader2 size={12} className="animate-spin" />
-                  Claude está leyendo tu receta...
-                </p>
-              )}
-              {photoError && <p className="text-red-600 text-xs bg-red-50 px-3 py-2 rounded-lg">{photoError}</p>}
+                  <button
+                    onClick={() => removePhotoPage(idx)}
+                    className="absolute top-1 right-1 w-5 h-5 bg-black/60 hover:bg-red-600 text-white rounded-full items-center justify-center hidden group-hover:flex transition-colors"
+                  >
+                    <X size={10} />
+                  </button>
+                </div>
+              ))}
             </div>
+          )}
+
+          {/* Action buttons */}
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => cameraInputRef.current?.click()}
+              disabled={photoLoading}
+              className="flex items-center gap-2 px-4 py-2.5 border border-fresh-300 hover:bg-fresh-50 disabled:opacity-40 text-fresh-700 text-sm font-medium rounded-xl transition-colors"
+            >
+              <Camera size={15} />
+              📷 Sacar foto
+            </button>
+            <button
+              onClick={() => galleryInputRef.current?.click()}
+              disabled={photoLoading}
+              className="flex items-center gap-2 px-4 py-2.5 border border-fresh-300 hover:bg-fresh-50 disabled:opacity-40 text-fresh-700 text-sm font-medium rounded-xl transition-colors"
+            >
+              <ImageIcon size={15} />
+              Subir desde galería
+            </button>
+            {photoPages.length > 0 && (
+              <button
+                onClick={digitizePhotos}
+                disabled={photoLoading}
+                className="flex items-center gap-2 px-5 py-2.5 bg-fresh-500 hover:bg-fresh-600 disabled:bg-fresh-300 text-white text-sm font-semibold rounded-xl transition-colors"
+              >
+                {photoLoading
+                  ? <><Loader2 size={15} className="animate-spin" /> Analizando...</>
+                  : <><Sparkles size={15} /> Digitalizar {photoPages.length} {photoPages.length === 1 ? 'foto' : 'fotos'}</>
+                }
+              </button>
+            )}
           </div>
+
+          {photoLoading && (
+            <p className="text-fresh-600 text-xs mt-2 flex items-center gap-1.5">
+              <Loader2 size={12} className="animate-spin" />
+              Claude está leyendo tu receta...
+            </p>
+          )}
+          {photoError && <p className="text-red-600 text-xs mt-2 bg-red-50 px-3 py-2 rounded-lg">{photoError}</p>}
         </div>
 
         {/* ── Text AI ── */}
