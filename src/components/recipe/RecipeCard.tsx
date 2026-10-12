@@ -1,12 +1,8 @@
 import Link from 'next/link'
 import { Clock, Users, Flame } from 'lucide-react'
 import type { Recipe } from '@/types'
-
-const difficultyLabel: Record<string, string> = {
-  facil: 'Fácil',
-  media: 'Media',
-  dificil: 'Difícil',
-}
+import { useLang, pick } from '@/contexts/LangContext'
+import { t, tr } from '@/lib/translations'
 
 const difficultyColor: Record<string, string> = {
   facil: 'bg-fresh-100 text-fresh-700',
@@ -19,7 +15,14 @@ interface RecipeCardProps {
 }
 
 export default function RecipeCard({ recipe }: RecipeCardProps) {
+  const { lang } = useLang()
   const totalTime = recipe.prep_time + recipe.cook_time
+
+  const difficultyLabel: Record<string, string> = {
+    facil:   tr(t.recipes.easy,   lang),
+    media:   tr(t.recipes.medium, lang),
+    dificil: tr(t.recipes.hard,   lang),
+  }
 
   return (
     <Link
@@ -32,7 +35,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={recipe.image_url}
-            alt={recipe.title_es}
+            alt={pick(recipe.title_es, recipe.title_en, lang)}
             className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
@@ -42,7 +45,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
         )}
         {recipe.featured && (
           <span className="absolute top-2 left-2 px-2 py-0.5 bg-lemon-400 text-earth-900 text-xs font-bold rounded-full">
-            ⭐ Destacada
+            {tr(t.recipes.featured, lang)}
           </span>
         )}
         <span className={`absolute top-2 right-2 px-2 py-0.5 text-xs font-medium rounded-full ${difficultyColor[recipe.difficulty]}`}>
@@ -54,15 +57,15 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
       <div className="p-4 flex flex-col flex-1">
         {recipe.category && (
           <span className="text-xs font-semibold text-fresh-600 uppercase tracking-wide mb-1">
-            {recipe.category.icon} {recipe.category.name_es}
+            {recipe.category.icon} {pick(recipe.category.name_es, recipe.category.name_en, lang)}
           </span>
         )}
         <h3 className="font-display font-semibold text-earth-900 text-base leading-snug mb-2 group-hover:text-fresh-700 transition-colors line-clamp-2">
-          {recipe.title_es}
+          {pick(recipe.title_es, recipe.title_en, lang)}
         </h3>
-        {recipe.description_es && (
+        {(recipe.description_es || recipe.description_en) && (
           <p className="text-earth-700 text-sm leading-relaxed line-clamp-2 mb-3 flex-1">
-            {recipe.description_es}
+            {pick(recipe.description_es, recipe.description_en, lang)}
           </p>
         )}
 

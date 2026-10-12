@@ -1,6 +1,11 @@
+'use client'
+
 import Link from 'next/link'
+import { useLang } from '@/contexts/LangContext'
+import { t, tr } from '@/lib/translations'
 
 export default function Footer() {
+  const { lang } = useLang()
   return (
     <footer className="mt-auto border-t border-fresh-100 bg-fresh-50">
       <div className="container-app py-8">
@@ -10,11 +15,11 @@ export default function Footer() {
             <span className="font-display font-semibold text-fresh-700">Hola Fresco</span>
           </div>
           <p className="text-sm text-earth-700 text-center">
-            Recetas fáciles, rápidas y saludables. Cocina con alegría.
+            {tr(t.footer.tagline, lang)}
           </p>
           <div className="flex items-center gap-4 text-sm text-earth-700">
-            <Link href="/recipes" className="hover:text-fresh-600 transition-colors">Recetas</Link>
-            <Link href="/cocina" className="hover:text-fresh-600 transition-colors">Mi Cocina</Link>
+            <Link href="/recipes" className="hover:text-fresh-600 transition-colors">{tr(t.footer.recipes, lang)}</Link>
+            <Link href="/cocina" className="hover:text-fresh-600 transition-colors">{tr(t.footer.kitchen, lang)}</Link>
           </div>
         </div>
       </div>

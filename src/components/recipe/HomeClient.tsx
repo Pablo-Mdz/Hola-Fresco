@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { Search, ChevronRight, ShoppingBasket } from 'lucide-react'
 import type { Category, Recipe } from '@/types'
 import RecipeCard from './RecipeCard'
+import { useLang, pick } from '@/contexts/LangContext'
+import { t, tr } from '@/lib/translations'
 
 interface HomeClientProps {
   categories: Category[]
@@ -14,6 +16,7 @@ interface HomeClientProps {
 export default function HomeClient({ categories, recipes }: HomeClientProps) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+  const { lang } = useLang()
 
   // Count recipes per category
   const countByCategory = recipes.reduce<Record<string, number>>((acc, r) => {
@@ -40,19 +43,21 @@ export default function HomeClient({ categories, recipes }: HomeClientProps) {
               🥬 Hola Fresco
             </p>
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-earth-900 leading-tight mb-4">
-              Cocina rico,{' '}
-              <span className="text-fresh-500 italic">sin complicarte.</span>
+              {lang === 'es' ? (
+                <>Cocina rico,{' '}<span className="text-fresh-500 italic">sin complicarte.</span></>
+              ) : (
+                <>Cook well,{' '}<span className="text-fresh-500 italic">stress-free.</span></>
+              )}
             </h1>
             <p className="text-earth-700 text-lg md:text-xl mb-8 leading-relaxed">
-              Recetas fáciles y saludables con lista de compras descargable.
-              Elegís las recetas, nosotros te decimos qué comprar.
+              {tr(t.home.subtitle, lang)}
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <Link
                 href="/recipes"
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-fresh-500 hover:bg-fresh-600 text-white font-semibold rounded-btn transition-colors shadow-sm"
               >
-                Ver recetas
+                {tr(t.home.viewRecipes, lang)}
                 <ChevronRight size={18} />
               </Link>
               <Link
@@ -60,7 +65,7 @@ export default function HomeClient({ categories, recipes }: HomeClientProps) {
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-lemon-400 hover:bg-lemon-500 text-earth-900 font-semibold rounded-btn transition-colors"
               >
                 <ShoppingBasket size={18} />
-                Mi Cocina
+                {tr(t.home.myKitchen, lang)}
               </Link>
             </div>
           </div>
@@ -74,7 +79,7 @@ export default function HomeClient({ categories, recipes }: HomeClientProps) {
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-earth-700" size={18} />
           <input
             type="text"
-            placeholder="Buscar recetas..."
+            placeholder={tr(t.home.searchPlaceholder, lang)}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 border border-earth-200 rounded-btn bg-white text-earth-900 placeholder:text-earth-700 focus:outline-none focus:ring-2 focus:ring-fresh-400 text-sm"
@@ -91,7 +96,7 @@ export default function HomeClient({ categories, recipes }: HomeClientProps) {
                 : 'bg-white text-earth-700 border-earth-200 hover:border-fresh-400 hover:text-fresh-600'
             }`}
           >
-            Todas <span className="opacity-70">({recipes.length})</span>
+            {tr(t.home.allCategory, lang)} <span className="opacity-70">({recipes.length})</span>
           </button>
           {categories.map(cat => {
             const count = countByCategory[cat.id] ?? 0
@@ -110,7 +115,7 @@ export default function HomeClient({ categories, recipes }: HomeClientProps) {
                 disabled={count === 0}
               >
                 <span>{cat.icon}</span>
-                {cat.name_es}
+                {pick(cat.name_es, cat.name_en, lang)}
                 {count > 0 && <span className="opacity-70">({count})</span>}
               </button>
             )
@@ -128,10 +133,10 @@ export default function HomeClient({ categories, recipes }: HomeClientProps) {
           <div className="text-center py-20">
             <div className="text-6xl mb-4">🌱</div>
             <h2 className="font-display text-2xl font-semibold text-earth-900 mb-2">
-              Las recetas están en camino
+              {tr(t.home.emptyTitle, lang)}
             </h2>
             <p className="text-earth-700 max-w-sm mx-auto">
-              Pronto vas a encontrar aquí recetas deliciosas y saludables para cocinar en casa.
+              {tr(t.home.emptySubtitle, lang)}
             </p>
           </div>
         )}

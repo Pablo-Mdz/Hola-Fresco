@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Plus_Jakarta_Sans, Fraunces } from 'next/font/google'
+import { LangProvider } from '@/contexts/LangContext'
 import './globals.css'
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -53,7 +54,9 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${plusJakarta.variable} ${fraunces.variable} h-full`}>
       <body className="min-h-full flex flex-col bg-white text-earth-900 antialiased">
-        {children}
+        <LangProvider>
+          {children}
+        </LangProvider>
       </body>
     </html>
   )
