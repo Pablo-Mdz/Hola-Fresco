@@ -1,0 +1,37 @@
+{
+  "name": "HF Admin",
+  "short_name": "HF Admin",
+  "description": "Panel de administración de Hola Fresco",
+  "start_url": "/admin/recipes",
+  "scope": "/admin",
+  "display": "standalone",
+  "background_color": "#14532d",
+  "theme_color": "#15803d",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-admin-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-admin-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nueva receta",
+      "url": "/admin/recipes/new",
+      "icons": [{ "src": "/icon-admin-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Ver recetas",
+      "url": "/admin/recipes",
+      "icons": [{ "src": "/icon-admin-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
